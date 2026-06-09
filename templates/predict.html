@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Prédiction Churn</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(135deg, #1b5e20, #4caf50);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glass-card {
+            width: 480px;
+            padding: 35px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeIn 0.7s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #e8f5e9;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            margin-bottom: 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            background: rgba(255,255,255,0.8);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .toggle-label {
+            color: #e8f5e9;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #ccc;
+            border-radius: 30px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2e7d32;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.25s;
+        }
+
+        button:hover {
+            background: #1b5e20;
+            transform: translateY(-2px);
+        }
+
+        #riskBar {
+            width: 100%;
+            height: 25px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 12px;
+            margin-top: 25px;
+            overflow: hidden;
+            display: none;
+        }
+
+        #riskFill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        #riskText {
+            margin-top: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glass-card">
+        <h2>Prédiction du Churn</h2>
+
+        <form id="predictForm">
+
+            <label>Âge</label>
+            <input type="number" name="Age" required>
+
+            <div class="toggle-container">
+                <span class="toggle-label">Account Manager</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="accountToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <input type="hidden" name="Account_Manager" id="accountValue">
+
+            <label>Années (Years)</label>
+            <input type="number" step="0.1" name="Years" required>
+
+            <label>Nombre de sites (Num_Sites)</label>
+            <input type="number" name="Num_Sites" required>
+
+            <button type="submit">Lancer la prédiction</button>
+        </form>
+
+        <div id="riskBar">
+            <div id="riskFill"></div>
+        </div>
+
+        <div id="riskText"></div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById("accountToggle");
+        const hiddenInput = document.getElementById("accountValue");
+
+        toggle.addEventListener("change", () => {
+            hiddenInput.value = toggle.checked ? 1 : 0;
+        });
+
+        hiddenInput.value = 0;
+
+        document.getElementById("predictForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const response = await fetch("/predict", { method: "POST", body: formData });
+            const data = await response.json();
+
+            const bar = document.getElementById("riskBar");
+            const fill = document.getElementById("riskFill");
+            const text = document.getElementById("riskText");
+
+            const proba = data.probability * 100;
+
+            bar.style.display = "block";
+            text.style.display = "block";
+
+            let color;
+            if (proba < 40) {
+                color = "linear-gradient(90deg, #0f9d58, #34c759)";
+            } else if (proba < 70) {
+                color = "linear-gradient(90deg, #ff9800, #f57c00)";
+            } else if (proba < 90) {
+                color = "linear-gradient(90deg, #e53935, #c62828)";
+            } else {
+                color = "linear-gradient(90deg, #b71c1c, #7f0000)";
+            }
+
+            fill.style.background = color;
+            fill.style.width = proba + "%";
+
+            let phrase;
+            if (proba < 40) {
+                phrase = "🟢 Le client est engagé et satisfait. Aucun signe d’alerte.";
+            }
+            else if (proba < 70) {
+                phrase = "🟠 Le client montre des signaux faibles. Un contact préventif permettrait de sécuriser la relation.";
+            }
+            else if (proba < 90) {
+                phrase = "🔴 Le client décroche. Une action ciblée est nécessaire pour éviter la résiliation.";
+            }
+            else {
+                phrase = "🚨 Le client est sur le point de partir. Intervention immédiate indispensable.";
+            }
+
+            text.innerHTML = phrase + " (" + proba.toFixed(2) + "%)";
+        });
+    </script>
+
+</body>
+</html>
