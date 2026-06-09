@@ -60,3 +60,11 @@ jobs:
       - name: Run tests inside Docker (optionnel)
         run: |
           docker run --rm churn-app:latest pytest -q || true
+          
+      - name: Initialize Elastic Beanstalk Application
+        run: |
+          eb init -p docker redha-test --region eu-west-1
+ 
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          eb deploy Env-redha-test
