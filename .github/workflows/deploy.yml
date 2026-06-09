@@ -2,8 +2,10 @@ name: CI-CD Churn App
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
+    branches:
+      - main
+    paths:
+      - train.py
 
 jobs:
   build-test:
