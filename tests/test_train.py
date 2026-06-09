@@ -5,6 +5,16 @@ import numpy as np
 from app import app
 
 # -----------------------------
+# Charger explicitement TON app.py
+# -----------------------------
+APP_PATH = os.path.abspath("app.py")
+spec = importlib.util.spec_from_file_location("my_flask_app", APP_PATH)
+my_flask_app = importlib.util.module_from_spec(spec)
+sys.modules["my_flask_app"] = my_flask_app
+spec.loader.exec_module(my_flask_app)
+
+app = my_flask_app.app
+# -----------------------------
 # 1. Vérifier que le modèle existe
 # -----------------------------
 def test_model_file_exists():
